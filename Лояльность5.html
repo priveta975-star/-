@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#ffffff">
+<title>D&D Мастер — Карта Лояльности</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Comfortaa:wght@500;700&family=Nunito:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose:      #ffb3c8;
+    --rose-deep: #ee8fab;
+    --rose-soft: #ffd6e2;
+    --rose-tint: #fff0f5;
+    --sky:       #a8d8ea;
+    --sky-deep:  #7ec0dd;
+
+    --white:     #ffffff;
+    --ink:       #3a3542;
+    --ink-soft:  #6b6170;
+    --muted:     #a296a6;
+    --danger:    #d97a97;
+    --star-off:  #e6dbe1;
+
+    --radius: 22px;
+    --shadow-card:  0 10px 30px -12px rgba(58,53,66,0.15);
+    --shadow-hover: 0 18px 40px -14px rgba(238,143,171,0.55);
+    --shadow-btn:        0 4px 12px -4px rgba(238,143,171,0.9);
+    --shadow-btn-hover:  0 6px 16px -4px rgba(238,143,171,1);
+    --grid: 60px;
+
+    --star-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 0 L13.6 10.4 L24 12 L13.6 13.6 L12 24 L10.4 13.6 L0 12 L10.4 10.4 Z'/></svg>");
+    --rating-star-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2 L14.9 9.4 L22.9 9.9 L16.7 15 L18.6 22.7 L12 18.5 L5.4 22.7 L7.3 15 L1.1 9.9 L9.1 9.4 Z'/></svg>");
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+  body {
+    background: var(--white);
+    color: var(--ink);
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3 { font-family: 'Comfortaa', sans-serif; font-weight: 700; color: var(--ink); }
+
+  .count, .fate-value, .stat-box .val, .id-num, .delta, .game-date .d {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ================= HERO ================= */
+  .hero {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative;
+    padding: 40px 20px;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--white);
+  }
+
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    perspective: 500px;
+    perspective-origin: 50% 45%;
+    overflow: hidden;
+    background: var(--white);
+  }
+  .grid-bg::before {
+    content: "";
+    position: absolute;
+    left: -50%; right: -50%;
+    top: -40%; bottom: -20%;
+    transform-origin: 50% 100%;
+    transform: rotateX(58deg) translateZ(0);
+    background-image:
+      linear-gradient(to right, var(--rose-deep) 2px, transparent 2px),
+      linear-gradient(to bottom, var(--rose-deep) 2px, transparent 2px);
+    background-size: var(--grid) var(--grid);
+    opacity: 0.75;
+    -webkit-mask-image: radial-gradient(ellipse 95% 95% at 50% 55%, #000 55%, transparent 100%);
+            mask-image: radial-gradient(ellipse 95% 95% at 50% 55%, #000 55%, transparent 100%);
+    animation: gridMove 22s linear infinite;
+    will-change: transform;
+  }
+  .grid-bg::after {
+    content: "";
+    position: absolute;
+    left: -50%; right: -50%;
+    top: -40%; bottom: -20%;
+    transform-origin: 50% 100%;
+    transform: rotateX(64deg) translateZ(0);
+    background-image:
+      linear-gradient(to right, var(--rose) 2px, transparent 2px),
+      linear-gradient(to bottom, var(--rose) 2px, transparent 2px);
+    background-size: 120px 120px;
+    opacity: 0.55;
+    -webkit-mask-image: radial-gradient(ellipse 85% 85% at 50% 55%, #000 45%, transparent 100%);
+            mask-image: radial-gradient(ellipse 85% 85% at 50% 55%, #000 45%, transparent 100%);
+  }
+  @keyframes gridMove {
+    from { transform: rotateX(58deg) translate3d(0, 0, 0); }
+    to   { transform: rotateX(58deg) translate3d(0, var(--grid), 0); }
+  }
+
+  .grid-fade {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background:
+      radial-gradient(ellipse 110% 110% at 50% 50%, transparent 65%, var(--white) 100%),
+      linear-gradient(to bottom, var(--white) 0%, transparent 8%, transparent 92%, var(--white) 100%);
+  }
+
+  .hero > *:not(.grid-bg):not(.grid-fade) { position: relative; z-index: 2; }
+
+  /* ================= Карта ================= */
+  .loyalty-card {
+    position: relative;
+    width: min(520px, 90vw);
+    aspect-ratio: 1.586 / 1;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--white) 0%, var(--rose-tint) 55%, var(--rose-soft) 100%);
+    box-shadow:
+      0 30px 60px -25px rgba(238,143,171,0.4),
+      0 0 0 2px var(--rose-soft);
+    overflow: hidden;
+    animation: floatIn 1.2s cubic-bezier(.2,.8,.2,1) both, cardFloat 5s ease-in-out infinite;
+  }
+  @keyframes cardFloat {
+    0%,100% { box-shadow: 0 30px 60px -25px rgba(238,143,171,0.4), 0 0 0 2px var(--rose-soft); }
+    50%     { box-shadow: 0 40px 70px -25px rgba(238,143,171,0.6), 0 0 0 2px var(--rose-soft); }
+  }
+  .loyalty-card::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(circle at 12% 18%, var(--rose-soft) 0%, transparent 42%),
+      radial-gradient(circle at 88% 82%, var(--rose) 0%, transparent 46%);
+    opacity: 0.55;
+  }
+  .loyalty-card::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(rgba(238,143,171,0.18) 1px, transparent 1px);
+    background-size: 14px 14px;
+    opacity: 0.6;
+  }
+
+  .card-chip {
+    position: absolute; top: 22px; left: 24px;
+    width: 46px; height: 34px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--rose) 0%, var(--rose-deep) 100%);
+    box-shadow: inset 0 -2px 6px rgba(255,255,255,0.6), inset 0 2px 6px rgba(58,53,66,0.12);
+    z-index: 2;
+  }
+  .card-chip::after {
+    content: ""; position: absolute; inset: 6px 8px;
+    border: 1px solid rgba(255,255,255,0.9); border-radius: 6px;
+  }
+
+  .card-brand {
+    position: absolute; top: 24px; right: 26px;
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700; letter-spacing: 0.2em; font-size: 12px;
+    color: var(--rose-deep);
+    text-transform: uppercase;
+    z-index: 2;
+  }
+
+  .card-logo {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 30px;
+    text-align: center;
+    z-index: 2;
+  }
+  .card-logo .token-icon {
+    width: 62px; height: 62px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--rose) 0%, var(--rose-deep) 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 20px -6px rgba(238,143,171,0.8), inset 0 -3px 8px rgba(58,53,66,0.12);
+    margin-bottom: 14px;
+  }
+  .card-logo .token-icon::after {
+    content: "";
+    width: 30px; height: 30px;
+    background-color: var(--white);
+    -webkit-mask: var(--star-mask) center/contain no-repeat;
+            mask: var(--star-mask) center/contain no-repeat;
+  }
+  .card-logo .logo-text {
+    font-family: 'Cinzel Decorative', 'Comfortaa', serif;
+    font-weight: 900;
+    font-size: clamp(22px, 4.5vw, 34px);
+    letter-spacing: 0.04em;
+    line-height: 1.15;
+    text-shadow: 0 2px 0 var(--white);
+  }
+  .card-logo .logo-divider {
+    margin-top: 14px;
+    width: 60px; height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg, var(--rose), var(--rose-deep));
+  }
+
+  .card-bottom {
+    position: absolute; bottom: 20px; left: 24px; right: 24px;
+    display: flex; justify-content: space-between;
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 500;
+    font-size: 11px; letter-spacing: 0.2em;
+    color: var(--rose-deep);
+    text-transform: uppercase;
+    z-index: 2;
+  }
+
+  .hero h1 {
+    margin-top: 48px;
+    font-size: clamp(22px, 3.5vw, 36px);
+    text-align: center;
+    animation: floatIn 1.4s .2s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .hero p.sub {
+    margin-top: 14px;
+    color: var(--ink-soft);
+    font-style: italic;
+    font-size: 17px;
+    text-align: center;
+    animation: floatIn 1.4s .3s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .scroll-hint {
+    margin-top: 60px;
+    color: var(--rose-deep);
+    font-size: 12px; letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700;
+    animation: bounce 2.4s ease-in-out infinite;
+  }
+  @keyframes floatIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); opacity: .7; }
+    50%     { transform: translateY(8px); opacity: 1; }
+  }
+
+  /* ================= Секции ================= */
+  section.block {
+    padding: 90px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    contain: layout style;
+  }
+  .section-title {
+    font-size: clamp(22px, 3vw, 32px);
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .section-title::after {
+    content: ""; display: block;
+    width: 90px; height: 3px;
+    margin: 18px auto 0;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--rose-deep), var(--rose));
+  }
+  .section-sub {
+    text-align: center;
+    color: var(--ink-soft);
+    font-style: italic;
+    margin-bottom: 50px;
+  }
+
+  /* ================= Игроки ================= */
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 26px;
+  }
+  .player-card {
+    position: relative;
+    aspect-ratio: 1.586 / 1;
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--white) 0%, var(--rose-tint) 60%, var(--rose-soft) 100%);
+    border: 2px solid var(--rose-soft);
+    box-shadow: var(--shadow-card);
+    transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .35s;
+    overflow: hidden;
+    display: flex; flex-direction: column; justify-content: space-between;
+    animation: floatIn .7s both;
+    contain: layout style paint;
+  }
+  .player-card::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,179,200,0.55), transparent 60%);
+    opacity: 0;
+    transition: opacity .35s;
+  }
+  .player-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--rose);
+    box-shadow: var(--shadow-hover);
+  }
+  .player-card:hover::before { opacity: 1; }
+
+  .player-card .avatar {
+    width: 54px; height: 54px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--rose) 0%, var(--rose-deep) 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700; font-size: 20px;
+    color: var(--white);
+    box-shadow: 0 6px 16px -6px rgba(238,143,171,0.8), inset 0 -2px 6px rgba(58,53,66,0.15);
+  }
+  .player-card .name {
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700; font-size: 17px;
+  }
+  .player-card .meta {
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-weight: 600;
+  }
+  .player-card .id-num {
+    position: absolute; bottom: 14px; right: 18px;
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700; font-size: 11px;
+    color: var(--rose-deep);
+    letter-spacing: 0.15em;
+  }
+
+  /* ================= Жетоны ================= */
+  .fate-tokens {
+    position: absolute;
+    top: 14px; right: 14px;
+    display: flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, var(--rose-soft), var(--rose));
+    border: 2px solid var(--white);
+    border-radius: 999px;
+    padding: 4px 12px 4px 4px;
+    box-shadow: var(--shadow-btn);
+    transition: transform .25s, box-shadow .25s;
+    z-index: 2;
+  }
+  .player-card:hover .fate-tokens {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-btn-hover);
+  }
+  .fate-tokens .coin {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--rose-deep) 0%, var(--rose) 100%);
+    box-shadow: inset 0 -2px 4px rgba(58,53,66,0.18), 0 2px 6px rgba(238,143,171,0.7);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fate-tokens .coin::after {
+    content: "";
+    width: 12px; height: 12px;
+    background-color: var(--white);
+    -webkit-mask: var(--star-mask) center/contain no-repeat;
+            mask: var(--star-mask) center/contain no-repeat;
+  }
+  .fate-tokens .count {
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700; font-size: 14px;
+    color: var(--ink);
+    min-width: 18px;
+    text-align: center;
+  }
+  .fate-tokens .count.pop { animation: tokenPop .5s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes tokenPop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.7); color: var(--rose-deep); }
+    100% { transform: scale(1); }
+  }
+
+  .btn-round {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--white);
+    background: linear-gradient(135deg, var(--rose), var(--rose-deep));
+    color: var(--white);
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700; font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .15s, box-shadow .2s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: var(--shadow-btn);
+  }
+  .btn-round:hover,
+  .btn-round:focus-visible {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-btn-hover);
+    outline: none;
+  }
+  .btn-round:active { transform: scale(0.94); }
+  .btn-round.minus {
+    background: linear-gradient(135deg, var(--rose-deep) 0%, var(--danger) 100%);
+  }
+
+  .token-controls {
+    position: absolute;
+    bottom: 12px; right: 14px;
+    display: flex; gap: 6px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity .25s, transform .25s;
+    z-index: 3;
+  }
+  .player-card:hover .token-controls,
+  .player-card:focus-within .token-controls {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .token-toast {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700; font-size: 40px;
+    color: var(--rose-deep);
+    text-shadow: 0 4px 14px var(--white), 0 2px 6px rgba(238,143,171,0.8);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 5;
+    will-change: transform, opacity;
+  }
+  .token-toast.show { animation: toastFly 1s cubic-bezier(.2,.8,.2,1); }
+  @keyframes toastFly {
+    0%   { opacity: 0; transform: translate(-50%, -30%) scale(0.6); }
+    30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -110%) scale(1); }
+  }
+
+  /* ================= Модалка ================= */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(58,53,66,0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+    z-index: 100;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .modal {
+    background: var(--white);
+    border: 2px solid var(--rose-soft);
+    border-radius: var(--radius);
+    max-width: 720px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 40px 36px;
+    position: relative;
+    transform: translateY(20px) scale(.97);
+    transition: transform .3s cubic-bezier(.2,.8,.2,1);
+    box-shadow: 0 40px 80px -30px rgba(58,53,66,0.4);
+    overscroll-behavior: contain;
+  }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+  .modal::-webkit-scrollbar { width: 8px; }
+  .modal::-webkit-scrollbar-thumb { background: var(--rose-soft); border-radius: 4px; }
+
+  .modal-close {
+    position: absolute; top: 16px; right: 18px;
+    width: 38px; height: 38px;
+    border: 2px solid var(--white);
+    background: linear-gradient(135deg, var(--rose), var(--rose-deep));
+    color: var(--white);
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform .25s, box-shadow .2s;
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: var(--shadow-btn);
+  }
+  .modal-close:hover,
+  .modal-close:focus-visible {
+    transform: rotate(90deg) scale(1.05);
+    box-shadow: var(--shadow-btn-hover);
+    outline: none;
+  }
+
+  .modal h2 { font-size: 24px; margin-bottom: 6px; }
+  .modal .subtitle {
+    color: var(--rose-deep);
+    font-style: italic;
+    margin-bottom: 26px;
+    font-weight: 600;
+  }
+  .modal h3 {
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--rose-deep);
+    margin: 26px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px dotted var(--rose-soft);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 12px;
+  }
+  .stat-box {
+    background: linear-gradient(135deg, var(--rose-tint) 0%, var(--rose-soft) 100%);
+    border: 2px solid var(--white);
+    border-radius: 16px;
+    padding: 16px 12px;
+    text-align: center;
+    box-shadow: 0 6px 18px -10px rgba(238,143,171,0.6);
+    transition: transform .25s, box-shadow .25s;
+  }
+  .stat-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px -10px rgba(238,143,171,0.9);
+  }
+  .stat-box .val {
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 22px;
+    color: var(--rose-deep);
+  }
+  .stat-box .lbl {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    font-weight: 600;
+  }
+
+  .fate-banner {
+    display: flex; align-items: center; gap: 20px;
+    background: linear-gradient(135deg, var(--rose-soft) 0%, var(--rose) 100%);
+    border: 2px solid var(--white);
+    border-radius: 20px;
+    padding: 18px 22px;
+    margin-bottom: 8px;
+    box-shadow: 0 8px 24px -12px rgba(238,143,171,0.7);
+  }
+  .fate-banner .big-coin {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--rose-deep) 0%, var(--rose) 100%);
+    box-shadow: 0 6px 18px -6px rgba(238,143,171,0.9), inset 0 -3px 8px rgba(58,53,66,0.15);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .fate-banner .big-coin::after {
+    content: "";
+    width: 28px; height: 28px;
+    background-color: var(--white);
+    -webkit-mask: var(--star-mask) center/contain no-repeat;
+            mask: var(--star-mask) center/contain no-repeat;
+  }
+  .fate-banner .fate-info { flex: 1; }
+  .fate-banner .fate-label {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+  .fate-banner .fate-value {
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 32px;
+    line-height: 1;
+    margin-top: 4px;
+  }
+  .fate-banner .fate-controls { display: flex; gap: 8px; }
+  .fate-banner .fate-controls .btn-round { width: 44px; height: 44px; font-size: 20px; }
+
+  .fate-history { list-style: none; }
+  .fate-history li {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 10px 14px; margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--rose-tint) 0%, var(--rose-soft) 100%);
+    border-left: 4px solid var(--rose-deep);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .fate-history li.negative { border-left-color: var(--danger); }
+  .fate-history .reason { color: var(--ink); }
+  .fate-history .when { color: var(--ink-soft); font-size: 12px; white-space: nowrap; }
+  .fate-history .delta {
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .fate-history .delta.pos { color: var(--rose-deep); }
+  .fate-history .delta.neg { color: var(--danger); }
+  .fate-history .empty {
+    color: var(--muted);
+    font-style: italic;
+    border: none;
+    background: transparent;
+  }
+
+  .character {
+    background: linear-gradient(135deg, var(--rose-tint) 0%, var(--rose-soft) 100%);
+    border-left: 4px solid var(--rose-deep);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    transition: transform .25s, box-shadow .25s;
+  }
+  .character:hover {
+    transform: translateX(4px);
+    box-shadow: 0 8px 20px -10px rgba(238,143,171,0.7);
+  }
+  .character .cname {
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .character .cinfo {
+    font-size: 12px;
+    color: var(--rose-deep);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 3px;
+    font-weight: 700;
+  }
+  .character .cdesc {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* ================= Игры игрока в модалке ================= */
+  .player-games { list-style: none; }
+  .player-games li {
+    background: linear-gradient(135deg, var(--rose-tint) 0%, var(--rose-soft) 100%);
+    border-left: 4px solid var(--rose-deep);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    transition: transform .25s, box-shadow .25s;
+  }
+  .player-games li:hover {
+    transform: translateX(4px);
+    box-shadow: 0 8px 20px -10px rgba(238,143,171,0.7);
+  }
+  .player-games .pg-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .player-games .pg-title {
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .player-games .pg-date {
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .player-games .pg-desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+    margin-top: 4px;
+  }
+  .player-games .pg-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .player-games .pg-tag {
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--rose-deep);
+    background: var(--white);
+    border: 2px solid var(--rose-soft);
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* ================= Оценки (звёзды) ================= */
+  .rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .rating-stars {
+    display: inline-flex;
+    gap: 3px;
+  }
+  .rating-star {
+    width: 22px; height: 22px;
+    border: none;
+    background: var(--star-off);
+    cursor: pointer;
+    padding: 0;
+    transition: transform .15s, background-color .2s;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-mask: var(--rating-star-mask) center/contain no-repeat;
+            mask: var(--rating-star-mask) center/contain no-repeat;
+  }
+  .rating-star:hover { transform: scale(1.15); }
+  .rating-star.filled {
+    background: linear-gradient(135deg, var(--rose), var(--rose-deep));
+    filter: drop-shadow(0 2px 3px rgba(238,143,171,0.5));
+  }
+  .rating-star.readonly { cursor: default; }
+  .rating-star.readonly:hover { transform: none; }
+  .rating-value {
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--rose-deep);
+    min-width: 40px;
+  }
+  .rating-note {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  /* ================= Игры ================= */
+  .games-list { display: flex; flex-direction: column; gap: 22px; }
+  .game-item {
+    background: linear-gradient(135deg, var(--white) 0%, var(--rose-tint) 55%, var(--rose-soft) 100%);
+    border: 2px solid var(--rose-soft);
+    border-radius: var(--radius);
+    padding: 22px;
+    display: grid;
+    grid-template-columns: 160px 80px 1fr auto;
+    gap: 24px;
+    align-items: center;
+    box-shadow: var(--shadow-card);
+    transition: transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s, border-color .3s;
+    cursor: pointer;
+    contain: layout style;
+  }
+  .game-item:hover {
+    transform: translateY(-4px);
+    border-color: var(--rose);
+    box-shadow: var(--shadow-hover);
+  }
+  .game-art {
+    width: 160px; height: 120px;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, var(--rose) 0%, var(--rose-deep) 100%);
+    box-shadow: inset 0 0 0 2px var(--white), 0 6px 18px -8px rgba(238,143,171,0.7);
+    flex-shrink: 0;
+  }
+  .game-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .game-art.is-empty::after {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px; height: 44px;
+    background-color: var(--white);
+    -webkit-mask: var(--star-mask) center/contain no-repeat;
+            mask: var(--star-mask) center/contain no-repeat;
+  }
+
+  .game-date {
+    text-align: center;
+    font-family: 'Comfortaa', sans-serif;
+    color: var(--rose-deep);
+  }
+  .game-date .d { font-size: 26px; line-height: 1; }
+  .game-date .m {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+  .game-info .gtitle { font-family: 'Comfortaa', sans-serif; font-size: 17px; font-weight: 700; }
+  .game-info .gdesc {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin-top: 6px;
+    font-style: italic;
+  }
+  .game-info .game-rating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .game-info .game-rating .rating-value { font-size: 14px; }
+  .game-info .game-rating .rating-count {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  .game-tag {
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--rose-deep);
+    background: var(--white);
+    border: 2px solid var(--rose-soft);
+    padding: 7px 14px;
+    border-radius: 20px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px -6px rgba(238,143,171,0.7);
+    align-self: start;
+  }
+  .game-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  @media (max-width: 900px) {
+    .game-item {
+      grid-template-columns: 130px 1fr auto;
+      grid-template-areas: "art date tag" "art info info";
+      gap: 16px;
+    }
+    .game-art { grid-area: art; width: 130px; height: 130px; }
+    .game-date { grid-area: date; text-align: left; display: flex; gap: 6px; align-items: baseline; }
+    .game-info { grid-area: info; }
+    .game-tag { grid-area: tag; align-self: start; justify-self: end; }
+    .game-side { grid-area: tag; }
+  }
+  @media (max-width: 600px) {
+    .game-item {
+      grid-template-columns: 1fr;
+      grid-template-areas: "art" "date" "info" "tag";
+      text-align: center;
+    }
+    .game-art { width: 100%; height: 160px; }
+    .game-date { justify-content: center; }
+    .game-tag { justify-self: center; }
+    .modal { padding: 30px 22px; }
+    section.block { padding: 60px 18px; }
+  }
+
+  footer {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--ink-soft);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-top: 2px solid var(--rose-soft);
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 500;
+  }
+  .reset-btn {
+    background: transparent; border: none;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 14px;
+    -webkit-tap-highlight-color: transparent;
+    transition: color .2s;
+  }
+  .reset-btn:hover, .reset-btn:focus-visible { color: var(--danger); outline: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="grid-bg" aria-hidden="true"></div>
+  <div class="grid-fade" aria-hidden="true"></div>
+
+  <div class="loyalty-card">
+    <div class="card-chip"></div>
+    <div class="card-brand">Master&nbsp;Card</div>
+
+<div class="card-logo">
+      <div class="logo-text">Жетоны<br>Судьбы</div>
+      <div class="logo-divider"></div>
+    </div>
+
+    <div class="card-bottom">
+      <span>№ 0001</span>
+      <span>EmeProduct</span>
+    </div>
+  </div>
+
+  <h1>Карта Лояльности Мастера</h1>
+  <p class="sub">Хроники приключений, героев и подземелий</p>
+  <div class="scroll-hint">▼ История здесь ▼</div>
+</header>
+
+<section class="block" id="players">
+  <h2 class="section-title">Наши Герои Стола</h2>
+  <p class="section-sub">Наведи на карту, чтобы начислить жетон · Клик — подробнее</p>
+  <div class="players-grid" id="playersGrid"></div>
+</section>
+
+<section class="block" id="games">
+  <h2 class="section-title">Проведённые Игры</h2>
+  <p class="section-sub">Хроника наших сессий · средний рейтинг от игроков</p>
+  <div class="games-list" id="gamesList"></div>
+</section>
+
+<footer>
+  © Твой D&amp;D Мастер Вадим · Веселись, пока сердце разжигает костер твоей души 
+  <br>
+  <button class="reset-btn" onclick="resetAllTokens()">Сбросить все жетоны</button>
+</footer>
+
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="Закрыть">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* =====================================================
+   ДАННЫЕ
+   ===================================================== */
+
+const players = [
+  {
+    id: 1, name: "Алексей", realName: "Алексей Петров",
+    title: "Хранитель Древних Знаний", initials: "А", fateTokens: 5,
+    stats: { games: 14, characters: 3, hours: 62, natural20: 27 },
+    characters: [
+      { name: "Терон Светозарный", info: "Паладин · Человек · 7 ур.", desc: "Служитель богини рассвета, ищет искупления за прошлые грехи." },
+      { name: "Грим", info: "Варвар · Полуорк · 4 ур.", desc: "Молчаливый, но преданный. Любит пиво и топоры." }
+    ]
+  },
+  {
+    id: 2, name: "Мария", realName: "Мария Соколова",
+    title: "Плетущая Судьбы", initials: "М", fateTokens: 3,
+    stats: { games: 12, characters: 4, hours: 54, natural20: 19 },
+    characters: [
+      { name: "Элария Теней", info: "Волшебница · Эльф · 8 ур.", desc: "Мастер иллюзий, любит вводить врагов в заблуждение." },
+      { name: "Мурка", info: "Плут · Табакси · 3 ур.", desc: "Хитрая и вороватая. Обожает блестяшки." }
+    ]
+  },
+  {
+    id: 3, name: "Дмитрий", realName: "Дмитрий Волков",
+    title: "Щит Отряда", initials: "Д", fateTokens: 7,
+    stats: { games: 15, characters: 2, hours: 68, natural20: 33 },
+    characters: [
+      { name: "Бранн Каменнобород", info: "Воин · Дварф · 9 ур.", desc: "Ветеран сотни битв. Никогда не отступает." }
+    ]
+  },
+  {
+    id: 4, name: "Ксения", realName: "Ксения Орлова",
+    title: "Голос Природы", initials: "К", fateTokens: 4,
+    stats: { games: 10, characters: 3, hours: 45, natural20: 14 },
+    characters: [
+      { name: "Лира Ветролист", info: "Друид · Полуэльф · 6 ур.", desc: "Защитница леса, разговаривает с животными." }
+    ]
+  }
+];
+
+/* У каждой игры:
+   - players: массив id игроков, которые в ней участвовали
+   - ratings: объект вида { idИгрока: оценка 1-5 }
+*/
+const games = [
+  {
+    id: 101,
+    date: { d: "12", m: "Окт" },
+    title: "Проклятие Страда",
+    desc: "Отряд прибыл в Баровию и впервые столкнулся с графом Страдом.",
+    tag: "Кампания",
+    image: "",
+    players: [1, 2, 3, 4],
+    ratings: { 1: 5, 2: 5, 3: 4, 4: 5 }
+  },
+  {
+    id: 102,
+    date: { d: "05", m: "Окт" },
+    title: "Пещера Ледяного Клыка",
+    desc: "Однострочная сессия с драконом в подземелье. Погиб один персонаж.",
+    tag: "Ваншот",
+    image: "",
+    players: [1, 3, 4],
+    ratings: { 1: 4, 3: 3, 4: 4 }
+  },
+  {
+    id: 103,
+    date: { d: "28", m: "Сен" },
+    title: "Тайны Штормового Порта",
+    desc: "Городское расследование с культистами и морским чудовищем.",
+    tag: "Мини-арка",
+    image: "",
+    players: [2, 3, 4],
+    ratings: { 2: 4, 3: 4 }
+  },
+  {
+    id: 104,
+    date: { d: "14", m: "Сен" },
+    title: "Свадьба в Хейвенфорде",
+    desc: "Социальная сессия с интригами, ядами и одним очень пьяным бардом.",
+    tag: "РП",
+    image: "",
+    players: [1, 2, 4],
+    ratings: { 1: 3, 2: 5, 4: 5 }
+  }
+];
+
+/* =====================================================
+   ХРАНИЛИЩЕ
+   ===================================================== */
+
+const STORAGE_KEY = 'dnd_fate_tokens_v1';
+const HISTORY_KEY = 'dnd_fate_history_v1';
+const RATINGS_KEY = 'dnd_game_ratings_v1';
+
+let historyCache = null;
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    for (const p of players) {
+      if (typeof saved[p.id] === 'number') p.fateTokens = saved[p.id];
+    }
+  } catch {}
+}
+function saveState() {
+  const data = {};
+  for (const p of players) data[p.id] = p.fateTokens;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+/* ---- История жетонов ---- */
+function getHistory() {
+  if (historyCache) return historyCache;
+  try { historyCache = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}'); }
+  catch { historyCache = {}; }
+  return historyCache;
+}
+function pushHistory(playerId, delta, reason = 'Изменение мастером') {
+  const h = getHistory();
+  const list = h[playerId] || (h[playerId] = []);
+  list.unshift({
+    delta, reason,
+    when: new Date().toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+  });
+  if (list.length > 30) list.length = 30;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+}
+
+/* ---- Оценки игр (по игрокам) ---- */
+let ratingsCache = null;
+
+function loadRatings() {
+  if (ratingsCache) return ratingsCache;
+  try {
+    const saved = JSON.parse(localStorage.getItem(RATINGS_KEY) || 'null');
+    if (saved) {
+      // Накладываем сохранённые оценки поверх дефолтных
+      for (const g of games) {
+        if (saved[g.id]) g.ratings = saved[g.id];
+      }
+    }
+  } catch {}
+  ratingsCache = {};
+  for (const g of games) ratingsCache[g.id] = g.ratings;
+  return ratingsCache;
+}
+function saveRatings() {
+  const data = {};
+  for (const g of games) data[g.id] = g.ratings;
+  localStorage.setItem(RATINGS_KEY, JSON.stringify(data));
+}
+
+function setRating(game, playerId, value) {
+  // value: 1..5 или 0 (снять оценку)
+  if (value === 0) {
+    delete game.ratings[playerId];
+  } else {
+    game.ratings[playerId] = value;
+  }
+  saveRatings();
+}
+
+function avgRating(game) {
+  const values = Object.values(game.ratings || {});
+  if (!values.length) return 0;
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+function gamesOfPlayer(playerId) {
+  return games.filter(g => (g.players || []).includes(playerId));
+}
+
+/* =====================================================
+   ИЗМЕНЕНИЕ ЖЕТОНОВ
+   ===================================================== */
+function changeTokens(player, delta) {
+  const next = Math.max(0, player.fateTokens + delta);
+  const realDelta = next - player.fateTokens;
+  if (realDelta === 0) return;
+
+  player.fateTokens = next;
+  saveState();
+  pushHistory(player.id, realDelta);
+
+  const card = player._card;
+  if (card) {
+    const countEl = card._countEl;
+    countEl.textContent = next;
+    countEl.classList.remove('pop');
+    requestAnimationFrame(() => countEl.classList.add('pop'));
+    showToast(card, realDelta);
+  }
+
+  const modalVal = document.querySelector('.fate-banner .fate-value');
+  if (modalVal && modalVal.dataset.playerId == player.id) {
+    modalVal.textContent = next;
+    const listWrap = document.querySelector('.fate-history-wrap');
+    if (listWrap) listWrap.replaceChildren(buildHistoryList(player.id));
+  }
+}
+
+function showToast(card, delta) {
+  const t = document.createElement('div');
+  t.className = 'token-toast';
+  t.textContent = (delta > 0 ? '+' : '') + delta;
+  t.style.color = delta > 0 ? 'var(--rose-deep)' : 'var(--danger)';
+  card.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => t.remove(), 1000);
+}
+
+/* =====================================================
+   РЕНДЕР
+   ===================================================== */
+loadState();
+loadRatings();
+
+const playersGrid = document.getElementById('playersGrid');
+const gamesList   = document.getElementById('gamesList');
+
+/* ---- Игроки ---- */
+{
+  const frag = document.createDocumentFragment();
+  players.forEach((p, i) => {
+    const card = document.createElement('article');
+    card.className = 'player-card';
+    card.dataset.playerId = p.id;
+    card.style.animationDelay = (i * 0.08) + 's';
+
+    const tokens = document.createElement('div');
+    tokens.className = 'fate-tokens';
+    tokens.title = 'Жетоны Судьбы';
+    tokens.innerHTML = `<div class="coin"></div><div class="count">${p.fateTokens}</div>`;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = p.initials;
+
+    const info = document.createElement('div');
+    const name = document.createElement('div');
+    name.className = 'name';
+    name.textContent = p.name;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const n = p.characters.length;
+    meta.textContent = `${n} персонаж${n === 1 ? '' : (n < 5 ? 'а' : 'ей')}`;
+    info.append(name, meta);
+
+    const idEl = document.createElement('div');
+    idEl.className = 'id-num';
+    idEl.textContent = '#' + String(p.id).padStart(3, '0');
+
+    const controls = document.createElement('div');
+    controls.className = 'token-controls';
+    const btnMinus = document.createElement('button');
+    btnMinus.className = 'btn-round minus';
+    btnMinus.type = 'button';
+    btnMinus.setAttribute('aria-label', 'Списать жетон');
+    btnMinus.textContent = '−';
+    const btnPlus = document.createElement('button');
+    btnPlus.className = 'btn-round plus';
+    btnPlus.type = 'button';
+    btnPlus.setAttribute('aria-label', 'Начислить жетон');
+    btnPlus.textContent = '+';
+    controls.append(btnMinus, btnPlus);
+
+    card.append(tokens, avatar, info, idEl, controls);
+    card._countEl = tokens.querySelector('.count');
+    p._card = card;
+
+    frag.appendChild(card);
+  });
+  playersGrid.appendChild(frag);
+}
+
+/* ---- Делегированный клик по игрокам ---- */
+playersGrid.addEventListener('click', e => {
+  const card = e.target.closest('.player-card');
+  if (!card) return;
+  const player = players.find(p => p.id == card.dataset.playerId);
+  if (!player) return;
+
+  const btn = e.target.closest('.btn-round');
+  if (btn) {
+    changeTokens(player, btn.classList.contains('plus') ? +1 : -1);
+    return;
+  }
+  openPlayer(player);
+});
+
+/* ---- Подсветка под курсором ---- */
+let rafPending = false;
+playersGrid.addEventListener('mousemove', e => {
+  if (rafPending) return;
+  rafPending = true;
+  const ev = e;
+  requestAnimationFrame(() => {
+    const card = ev.target.closest('.player-card');
+    if (card) {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (ev.clientX - r.left) + 'px');
+      card.style.setProperty('--my', (ev.clientY - r.top) + 'px');
+    }
+    rafPending = false;
+  });
+});
+
+/* ---- Игры ---- */
+function renderGames() {
+  gamesList.replaceChildren();
+  const frag = document.createDocumentFragment();
+
+  for (const g of games) {
+    const item = document.createElement('article');
+    item.className = 'game-item';
+    item.dataset.gameId = g.id;
+
+    const art = document.createElement('div');
+    art.className = 'game-art' + (g.image ? '' : ' is-empty');
+    if (g.image) {
+      const img = document.createElement('img');
+      img.src = g.image;
+      img.alt = g.title;
+      img.loading = 'lazy';
+      art.appendChild(img);
+    }
+
+    const date = document.createElement('div');
+    date.className = 'game-date';
+    date.innerHTML = `<div class="d">${g.date.d}</div><div class="m">${g.date.m}</div>`;
+
+    const info = document.createElement('div');
+    info.className = 'game-info';
+    const title = document.createElement('div');
+    title.className = 'gtitle';
+    title.textContent = g.title;
+    const desc = document.createElement('div');
+    desc.className = 'gdesc';
+    desc.textContent = g.desc;
+
+    // Блок со средним рейтингом
+    const ratingRow = document.createElement('div');
+    ratingRow.className = 'game-rating';
+    ratingRow.appendChild(buildReadonlyStars(avgRating(g)));
+    const avg = avgRating(g);
+    const count = Object.keys(g.ratings || {}).length;
+    const val = document.createElement('span');
+    val.className = 'rating-value';
+    val.textContent = avg ? avg.toFixed(1) : '—';
+    const cnt = document.createElement('span');
+    cnt.className = 'rating-count';
+    cnt.textContent = count ? `(${count} ${plural(count, 'оценка', 'оценки', 'оценок')})` : '(нет оценок)';
+    ratingRow.append(val, cnt);
+
+    info.append(title, desc, ratingRow);
+
+    const tag = document.createElement('div');
+    tag.className = 'game-tag';
+    tag.textContent = g.tag;
+
+    item.append(art, date, info, tag);
+    frag.appendChild(item);
+  }
+  gamesList.appendChild(frag);
+}
+renderGames();
+
+/* ---- Делегированный клик по играм (на будущее, сейчас ничего не делает) ---- */
+gamesList.addEventListener('click', e => {
+  const item = e.target.closest('.game-item');
+  if (!item) return;
+  // Пока оставляем на будущее — можно открывать модалку игры
+});
+
+/* =====================================================
+   ХЕЛПЕРЫ
+   ===================================================== */
+
+function plural(n, one, few, many) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
+}
+
+/* Звёзды только для отображения */
+function buildReadonlyStars(value) {
+  const wrap = document.createElement('div');
+  wrap.className = 'rating-stars';
+  const full = Math.round(value);
+  for (let i = 1; i <= 5; i++) {
+    const s = document.createElement('span');
+    s.className = 'rating-star readonly' + (i <= full ? ' filled' : '');
+    wrap.appendChild(s);
+  }
+  return wrap;
+}
+
+/* Кликабельные звёзды для модалки игрока */
+function buildInteractiveStars(game, playerId) {
+  const wrap = document.createElement('div');
+  wrap.className = 'rating-stars';
+  const current = game.ratings?.[playerId] || 0;
+
+  for (let i = 1; i <= 5; i++) {
+    const s = document.createElement('button');
+    s.type = 'button';
+    s.className = 'rating-star' + (i <= current ? ' filled' : '');
+    s.setAttribute('aria-label', `Оценка ${i} из 5`);
+    s.dataset.value = i;
+    wrap.appendChild(s);
+  }
+
+  wrap.addEventListener('click', e => {
+    const btn = e.target.closest('.rating-star');
+    if (!btn) return;
+    const val = +btn.dataset.value;
+    const gameNow = game.ratings?.[playerId] || 0;
+    // Повторный клик по той же звезде — снять оценку
+    const newVal = (val === gameNow) ? 0 : val;
+    setRating(game, playerId, newVal);
+
+    // Перерисовываем звёзды в этой строке
+    const parent = wrap.parentElement;
+    wrap.replaceWith(buildInteractiveStars(game, playerId));
+
+    // Обновляем текст оценки
+    const valueEl = parent?.querySelector('.rating-value');
+    if (valueEl) {
+      valueEl.textContent = newVal ? `${newVal}/5` : '—';
+    }
+    // Обновляем средние рейтинги в списке игр
+    renderGames();
+  });
+
+  return wrap;
+}
+
+/* =====================================================
+   МОДАЛКА
+   ===================================================== */
+const modal = document.getElementById('modal');
+const modalContent = document.getElementById('modalContent');
+
+function openPlayer(p) {
+  modalContent.replaceChildren(
+    el('h2', p.realName),
+    el('div', p.title, 'subtitle'),
+    el('h3', 'Жетоны Судьбы'),
+    buildFateBanner(p),
+    wrap('fate-history-wrap', buildHistoryList(p.id)),
+    el('h3', 'Статистика'),
+    buildStats(p.stats),
+    el('h3', 'Персонажи'),
+    ...p.characters.map(buildCharacter),
+    el('h3', 'Игры, в которых участвовал'),
+    buildPlayerGames(p)
+  );
+
+  modalContent.querySelector('.fate-controls').addEventListener('click', e => {
+    const btn = e.target.closest('.btn-round');
+    if (!btn) return;
+    changeTokens(p, btn.classList.contains('plus') ? +1 : -1);
+  });
+
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  modal.querySelector('.modal-close').focus();
+}
+
+/* ---- Фабрики DOM ---- */
+function el(tag, text, cls) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+function wrap(cls, child) {
+  const w = document.createElement('div');
+  w.className = cls;
+  w.appendChild(child);
+  return w;
+}
+
+function buildFateBanner(p) {
+  const banner = el('div', null, 'fate-banner');
+  const coin = el('div', null, 'big-coin');
+  coin.setAttribute('aria-hidden', 'true');
+
+  const info = el('div', null, 'fate-info');
+  const val = el('div', String(p.fateTokens), 'fate-value');
+  val.dataset.playerId = p.id;
+  info.append(el('div', 'Текущий баланс', 'fate-label'), val);
+
+  const controls = el('div', null, 'fate-controls');
+  const minus = el('button', '−', 'btn-round minus');
+  minus.type = 'button';
+  minus.setAttribute('aria-label', 'Списать жетон');
+  const plus = el('button', '+', 'btn-round plus');
+  plus.type = 'button';
+  plus.setAttribute('aria-label', 'Начислить жетон');
+  controls.append(minus, plus);
+
+  banner.append(coin, info, controls);
+  return banner;
+}
+
+function buildStats(s) {
+  const grid = el('div', null, 'stats-grid');
+  const items = [
+    ['Игр', s.games], ['Персонажей', s.characters],
+    ['Часов', s.hours], ['Nat 20', s.natural20]
+  ];
+  for (const [lbl, val] of items) {
+    const box = el('div', null, 'stat-box');
+    box.append(el('div', String(val), 'val'), el('div', lbl, 'lbl'));
+    grid.appendChild(box);
+  }
+  return grid;
+}
+
+function buildCharacter(c) {
+  const box = el('div', null, 'character');
+  box.append(
+    el('div', c.name, 'cname'),
+    el('div', c.info, 'cinfo'),
+    el('div', c.desc, 'cdesc')
+  );
+  return box;
+}
+
+function buildHistoryList(playerId) {
+  const h = getHistory();
+  const list = h[playerId] || [];
+  const ul = el('ul', null, 'fate-history');
+
+  if (!list.length) {
+    ul.appendChild(el('li', 'Пока нет изменений — начисли первый жетон!', 'empty'));
+    return ul;
+  }
+  for (const item of list) {
+    const li = document.createElement('li');
+    if (item.delta < 0) li.classList.add('negative');
+    li.append(
+      el('span', item.reason, 'reason'),
+      el('span', (item.delta > 0 ? '+' : '') + item.delta, 'delta ' + (item.delta > 0 ? 'pos' : 'neg'))
+    );
+    ul.appendChild(li);
+  }
+  return ul;
+}
+
+/* ---- Список игр игрока с его оценкой ---- */
+function buildPlayerGames(p) {
+  const list = gamesOfPlayer(p.id);
+  const ul = el('ul', null, 'player-games');
+
+  if (!list.length) {
+    ul.appendChild(el('li', 'Этот игрок пока не участвовал в играх.', 'empty'));
+    return ul;
+  }
+
+  for (const g of list) {
+    const li = document.createElement('li');
+
+    const top = el('div', null, 'pg-top');
+    top.append(
+      el('div', g.title, 'pg-title'),
+      el('div', `${g.date.d} ${g.date.m}`, 'pg-date')
+    );
+
+    const desc = el('div', g.desc, 'pg-desc');
+
+    const bottom = el('div', null, 'pg-bottom');
+    const tag = el('div', g.tag, 'pg-tag');
+  }
+  return ul;
+}
+
+function closeModal() {
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* =====================================================
+   СБРОС
+   ===================================================== */
+function resetAllTokens() {
+  if (!confirm('Сбросить все жетоны судьбы до стартовых значений? История тоже очистится.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(HISTORY_KEY);
+  location.reload();
+}
+</script>
+</body>
+</html>
